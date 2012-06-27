@@ -62,7 +62,7 @@
         <h3>
           Why I care about Logging
         </h3>
-        <ul>
+        <ul class="build">
           <li>Apache HTTP Server:
             <br/>
             <ul>
@@ -85,7 +85,7 @@
         <h3>
           Application vs System Logging
         </h3>
-        <ul>
+        <ul class="build">
           <li>I am focusing on Application and Service Logging, not OS level.</li>
           <li>Don't abandon <code>syslog</code>, supplement it.</li>
         </ul>
@@ -96,7 +96,7 @@
         <h3>
           Motivation: Logging Meets "Cloud"
         </h3>
-        <ul>
+        <ul class="build">
           <li>Traditionally <em>Perl Powered®</em></li>
           <li>Many more Services.</li>
           <li>Services are multi-tenanted.</li>
@@ -184,6 +184,7 @@
         <h3>CLF vs JSON</h3>
 <br/>
 <div>Perl Cookbook says:</div>
+<div class="build">
 <pre>
 my ($client, $identuser, $authuser, $date, $time, $tz, $method,
     $url, $protocol, $status, $bytes) =
@@ -196,6 +197,7 @@ $msg = JSON->decode($json_text);
 <ul>
   <li>Now a developer adds a new field.</li>
 </ul>
+</div>
 </article>
 
       <article>
@@ -226,7 +228,7 @@ $msg = JSON->decode($json_text);
         <h3>
           Trace IDs
         </h3>
-        <ul>
+        <ul class="build">
           <li>Unique ID assigned to actions at the edge of your network</li>
           <li>Propagated to all your backend services.</li>
         </ul>
@@ -246,7 +248,7 @@ $msg = JSON->decode($json_text);
         </h3>
         <pre class="noprettyprint">.rh-el1U.h-ord1-maas-prod-api0.
 r-tvTCwfS3.c-33110.ts-1340775011499.v-c76a8c29</pre>
-        <ul>
+        <ul class="build">
           <li>rh: random on process startup</li>
           <li>h: hostname</li>
           <li>c: counter for this process</li>
@@ -273,11 +275,12 @@ r-tvTCwfS3.c-33110.ts-1340775011499.v-c76a8c29</pre>
         <h3>
           Shipping Logs: Goals
         </h3>
-        <ul>
+        <ul class="build">
           <li>If the network fails....</li>
           <li>Always write to local disk.</li>
           <li>Always write to local disk.</li>
           <li>Always write to local disk.</li>
+          <li>Real Time-ish.</li>
         </ul>
       </article>
 
