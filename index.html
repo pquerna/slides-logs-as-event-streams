@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+
+<!--
+  Rackspace HTML5 slide template,
+  based completely on the:
+
+  Google HTML5 slide template
+
+  Authors: Luke Mahé (code)
+           Marcin Wichary (code and design)
+           
+           Dominic Mazzoni (browser compatibility)
+           Charles Chen (ChromeVox support)
+
+  URL: http://code.google.com/p/html5slides/
+-->
+
+<html>
+  <head>
+    <title>Logging as Event Streams</title>
+
+    <meta charset='utf-8'>
+    <script
+      src='./slides.js'></script>
+  </head>
+  
+  <style>
+    /* Your individual styles here, or just use inline styles if that’s
+       what you want. */
+    
+    
+  </style>
+
+  <body style='display: none'>
+
+    <section class='slides template-rax'>
+      <!--
+      * Logging As Event Streams
+       * 4 areas:
+        * Log Formats
+          * events = machine parsable.
+        * Error IDs
+        * Trace IDs
+        * Log Transportation
+        * Logging Aggregation
+        * In Rest APIs / Audit Logs
+        
+      -->
+      <article>
+        <h1>
+          Logging as Event Streams
+          <br>
+        </h1>
+        <p>
+          Paul Querna
+          <br>
+          June 27, 2012 
+        </p>
+      </article>
+
+      <article>
+        <h3>
+          Why I care about Logging
+        </h3>
+        <ul>
+          <li>Apache HTTP Server:
+            <br/>
+            <ul>
+              <li>#httpd on Freenode IRC</li>
+            </ul>
+          </li>
+          <li>Rackspace Cloud Monitoring:
+            <br/>
+            <ul>
+              <li>API Driven, Monitoring as a Service.</li>
+              <li>Distributed across all Rackspace data centers.</li>
+              <li>Async events trigger support issues.</li>
+              <li>When things break, we can be called in.</li>
+            </ul>
+          </li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          Application vs System Logging
+        </h3>
+        <ul>
+          <li>I am focusing on Application and Service Logging, not OS level.</li>
+          <li>Don't abandon <code>syslog</code>, supplement it.</li>
+        </ul>
+      </article>
+
+
+      <article>
+        <h3>
+          Motivation: Logging Meets "Cloud"
+        </h3>
+        <ul>
+          <li>Traditionally <em>Perl Powered®</em></li>
+          <li>Many more Services.</li>
+          <li>Services are multi-tenanted.</li>
+          <li>Services run across many Servers.</li>
+          <li>Services owned by many Teams.</li>
+          <li><strong>Operability is critical to sustainability</strong></li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          Logging is an Event Emitter
+        </h3>
+          <pre>logging.error('Something is wrong');</pre>
+          <pre>emit('log', {level: 'error', msg: 'Something is wrong'});</pre>
+          There is no difference here.
+      </article>
+
+
+      <article>
+        <h3>
+          Structured Logging
+        </h3>
+        <ul>
+          <li>Not a new idea!</li>
+          <li>Most logs already have some structure.</li>
+          <li>1995: Common Log Format</li>
+          <pre>10.42.0.1 - - [10/Oct/2000:13:55:36 -0700]
+            "GET /apache_pb.gif HTTP/1.0" 200 2326</pre>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          Why Structured Logging?
+        </h3>
+        <ul>
+          <li>Many Producers, many Consumers</li>
+          <li>Many Programming Languages.</li>
+          <li>Services developed with only loose coupling.</li>
+        </ul>
+      </article>
+
+
+      <article>
+        <h3>
+          Structured Logging: JSON?
+        </h3>
+        <ul>
+          <li>Accessible in all Programming Languages</li>
+          <li>Newline terminated.</li>
+          <li><code>grep</code> works.</li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          HTTP Example
+        </h3>
+<pre>
+{
+    "timestamp": 1324830675.076,
+    "status": "404",
+    "short_message": "File does not exist: /var/www/no-such-file",
+    "host": "ord1.product.api0",
+    "facility": "httpd",
+    "errno": "ENOENT",
+    "remote_host": "50.57.61.4",
+    "remote_port": "40100",
+    "path": "/var/www/no-such-file",
+    "uri": "/no-such-file",
+    "level": 4,
+    "headers": {
+        "user-agent": "BadAgent/1.0",
+        "connection": "close",
+        "accept": "*/*"
+    },
+    "method": "GET",
+    "unique_id": ".rh-g2Tm.h-ord1.product.api0.r-axAIO3bO.c-9210.ts-1324830675.v-24e946e"
+}
+</pre>
+      </article>
+
+      <article>
+        <h3>CLF vs JSON</h3>
+<br/>
+<div>Perl Cookbook says:</div>
+<pre>
+my ($client, $identuser, $authuser, $date, $time, $tz, $method,
+    $url, $protocol, $status, $bytes) =
+/^(\S+) (\S+) (\S+) \[([^:]+):(\d+:\d+:\d+) ([^\]]+)\] "(\S+) (.*?) (\S+)"
+    (\S+) (\S+)$/;
+</pre>
+<pre>
+$msg = JSON->decode($json_text);
+</pre>
+<ul>
+  <li>Now a developer adds a new field.</li>
+</ul>
+</article>
+
+      <article>
+        <h3>Elements of Every Log Message</h3>
+        <ul>
+          <li>Timestamps, Host, Messages, Levels...</li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          Message Tags / IDs
+        </h3>
+        <ul>
+          <li>Added in Apache HTTPD 2.4: "AH02182".
+            <br/>
+            <pre class="noprettyprint">[Wed Jun 27 00:00:17.242251 2012] [allowmethods:error]
+[pid 70941:tid 4446611456] [client 203.0.113.3:4172]
+<span style="color: red;">AH01623</span>: client method denied by server configuration:
+'PROPFIND' to /x1/www/ooo-site.apache.org/content/3</pre>
+          </li>
+          <li>Easy to Search for.</li>
+          <li>Important for both Internal and Open Source.</li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          Trace IDs
+        </h3>
+        <ul>
+          <li>Unique ID assigned to actions at the edge of your network</li>
+          <li>Propagated to all your backend services.</li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          Trace IDs
+        </h3>
+        <img src="./img/TracingNetworks.png" height="90%">
+      </article>
+
+
+      <article>
+        <h3>
+          Trace IDs
+        </h3>
+        <pre class="noprettyprint">.rh-el1U.h-ord1-maas-prod-api0.
+r-tvTCwfS3.c-33110.ts-1340775011499.v-c76a8c29</pre>
+        <ul>
+          <li>rh: random on process startup</li>
+          <li>h: hostname</li>
+          <li>c: counter for this process</li>
+          <li>r: random per ID</li>
+          <li>ts: timestamp</li>
+          <li>v: Git version hash</li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          Trace IDs: Twitter Zipkin
+        </h3>
+        <br/>
+        <img src="./img/zipkin-shot.png" width="100%">
+        <ul>
+          <li>Open Sourced June 7th</li>
+          <li>Uses 64bit Integer as Trace ID</li>
+          <li>Aggregates via Scribe, stores in Cassandra, Ruby Web application</li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          Shipping Logs: Goals
+        </h3>
+        <ul>
+          <li>If the network fails....</li>
+          <li>Always write to local disk.</li>
+          <li>Always write to local disk.</li>
+          <li>Always write to local disk.</li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          svlogd, &amp; Scribe.
+        </h3>
+        <img src="./img/logging-flow.png" width="100%">
+      </article>
+
+      <article>
+        <h3>
+          Shipping Logs between machines
+        </h3>
+        <ul>
+          <li>Scribe</li>
+          <li>Apache Flume</li>
+          <li>syslog</li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          Scribe
+        </h3>
+        <ul>
+          <li>Open Sourced by Facebook</li>
+          <li>Bulk Log mover</li>
+          <li>Can buffer, retry, hash distribution, etc</li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          Scribe Setup
+        </h3>
+        <br/>
+        <img src="./img/ScribeFlow.png" width="100%">
+        <ul>
+          <li>Services always send to a <code>localhost</code></li>
+          <li>Local Scribe sends to higher level router Scribes.</li>
+          <li>Router Scribes forward to another Scribe which over localhost sends to Graylog2.</li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          Graylog2
+        </h3>
+        <ul>
+          <li>Open Source Web Application</li>
+          <li>Many Inputs (Syslog, Scribe, RabbitMQ)</li>
+          <li>Indexes into ElasticSearch</li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          Graylog2 Streams
+        </h3>
+        <br/>
+        <img src="./img/graylog2-streams.jpg" width="100%">
+      </article>
+
+      <article>
+        <h3>
+          Graylog2 Tracing
+        </h3>
+        <br/>
+        <img src="./img/graylog2-trace.jpg" width="100%">
+      </article>
+
+      <article>
+        <h3>
+          Graylog2 Message Permalink
+        </h3>
+        <br/>
+        <img src="./img/graylog2-permalink.jpg" width="100%">
+      </article>
+
+      <article>
+        <h3>
+          Detour: Audit Logs of HTTP APIs
+        </h3>
+        <ul>
+          <li>Phone support is asked when something was changed.</li>
+          <li>Not great for all types of APIs, works well for Monitoring Configuration.</li>
+          <li>Every mutation (POST/PUT/DELETE) is recorded.</li>
+          <li>Includes Headers and Request bodies.</li>
+          <li>Available as a user readable collection in the public API.</li>
+        </ul>
+      </article>
+
+      <article>
+        <h3>
+          Detour: Audit Logs of HTTP APIs
+        </h3>
+<pre>
+"values": [
+{
+  "id": "541615e0-bee4-11e1-a3c9-69984867fc3c",
+  "timestamp": 1340642367038,
+  "method": "POST",
+  "url": "/v1.0/626873/entities/entMvVW47r/test-check",
+  "app": "checks",
+  "query": {},
+  "txnId": ".rh-TL0q.h-ord1-maas-prod-api0.r-8NQS2mx5.c-280514.ts-1340642366874.v-1a7152ba29615a722a2713bef4d4fe2b5c6ee7ae",
+  "payload": "{\"target_hostname\":\"www.example.com\",\"type\":\"remote.http\",\"details\":{},\"monitoring_zones_poll\":[\"mzord\",\"mzdfw\",\"mzlon\"]}",
+  "account_id": "626873",
+  "headers": {
+      "host": "monitoring.api.rackspacecloud.com",
+      "accept-encoding": "gzip,deflate",
+      "content-type": "application/json; charset=UTF-8",
+      "accept": "application/json",
+      "user-agent": "libcloud/0.10.1 (Rackspace Monitoring)",
+      "content-length": "140"
+  },
+  "statusCode": 400
+},
+</pre>
+</article>
+      <article>
+        <h3>
+          Thank You &amp; Questions
+        </h3>
+
+        <br/>
+        <h4>
+            <a href='http://paul.querna.org/slides/'>paul.querna.org/slides</a>
+        </h4>
+        <br/>
+        <div>
+            <h4>Links:</h4>
+          <ul>
+            <li><a href='http://twitter.com/pquerna'>@pquerna</a></li>
+            <li><a href="http://journal.paul.querna.org/">journal.paul.querna.org</a></li>
+            <li><a href="http://graylog2.org">graylog2.org</a></li>
+            <li><a href='https://github.com/twitter/zipkin'>github.com/twitter/zipkin</a></li>
+          </ul>
+        </div>
+      </article>
+
+      <article class='biglogo'>
+      </article>
+
+    </section>
+
+  </body>
+</html>
