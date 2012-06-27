@@ -69,9 +69,10 @@
               <li>#httpd on Freenode IRC</li>
             </ul>
           </li>
-          <li>Rackspace Cloud Monitoring:
+          <li>Rackspace:
             <br/>
             <ul>
+              <li>I work on <a href="http://www.rackspace.com/cloud/cloud_hosting_products/monitoring/">Cloud Monitoring</a></li>
               <li>API Driven, Monitoring as a Service.</li>
               <li>Distributed across all Rackspace data centers.</li>
               <li>Async events trigger support issues.</li>
@@ -110,9 +111,11 @@
         <h3>
           Logging is an Event Emitter
         </h3>
+        <div class="build">
           <pre>logging.error('Something is wrong');</pre>
           <pre>emit('log', {level: 'error', msg: 'Something is wrong'});</pre>
-          There is no difference here.
+          <p>There is no difference here.</p>
+        </div>
       </article>
 
 
@@ -211,7 +214,9 @@ $msg = JSON->decode($json_text);
         <h3>
           Message Tags / IDs
         </h3>
-        <ul>
+        <ul class="build">
+          <li>Easy to Search for strings.</li>
+          <li>Important for both Internal and Open Source.</li>
           <li>Added in Apache HTTPD 2.4: "AH02182".
             <br/>
             <pre class="noprettyprint">[Wed Jun 27 00:00:17.242251 2012] [allowmethods:error]
@@ -219,8 +224,7 @@ $msg = JSON->decode($json_text);
 <span style="color: red;">AH01623</span>: client method denied by server configuration:
 'PROPFIND' to /x1/www/ooo-site.apache.org/content/3</pre>
           </li>
-          <li>Easy to Search for.</li>
-          <li>Important for both Internal and Open Source.</li>
+
         </ul>
       </article>
 
@@ -319,7 +323,7 @@ r-tvTCwfS3.c-33110.ts-1340775011499.v-c76a8c29</pre>
         </h3>
         <br/>
         <img src="./img/ScribeFlow.png" width="100%">
-        <ul>
+        <ul class="build">
           <li>Services always send to a <code>localhost</code></li>
           <li>Local Scribe sends to higher level router Scribes.</li>
           <li>Router Scribes forward to another Scribe which over localhost sends to Graylog2.</li>
